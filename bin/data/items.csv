@@ -1,0 +1,11 @@
+item_id,item_name,category,price,description,stock
+1,Apple iPhone 15,Phone,5999.00,The newest IPhone,50
+2,Samsung Galaxy S24,Phone,4999.00,Samsung high-end smart phone,30
+3,Xiaomi 14 Pro,Phone,3999.00,Xiaomi's cost-effective flagship smartphone,100
+4,Huawei Mate 60,Phone,6999.00,Huawei business flagship phone,20
+5,MacBook Pro,PC,12999.00,Apple's professional personal computer,15
+6,Dell XPS 13,PC,8999.00,Dell lightweight business laptop,25
+7,iPad Pro,Tablet,7999.00,Apple high-performance tablet,40
+8,AirPods Pro,Ear Phone,1999.00,Apple noise-canceling wireless earphones,200
+9,Sony WH-1000XM5,Ear Phone,2499.00,Sony flagship noise-canceling headphones,80
+10,Nintendo Switch,Game Console,2099.00,Nintendo game console,60

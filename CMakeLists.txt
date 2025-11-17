@@ -36,3 +36,5 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
 # 复制配置文件和数据文件到输出目录
 file(COPY ${PROJECT_SOURCE_DIR}/config.yaml 
      DESTINATION ${PROJECT_SOURCE_DIR}/bin)
+file(COPY ${PROJECT_SOURCE_DIR}/data/
+     DESTINATION ${PROJECT_SOURCE_DIR}/bin/data)
