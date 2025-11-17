@@ -1,0 +1,11 @@
+# 购物系统配置文件
+
+# 管理员账户信息
+admin:
+  username: admin
+  password: admin123
+
+# 数据文件路径
+data_files:
+  users: data/users.csv
+  items: data/items.csv

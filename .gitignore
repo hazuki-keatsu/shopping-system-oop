@@ -1,0 +1,23 @@
+# 编译输出
+bin/
+build/
+*.exe
+*.o
+*.obj
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 数据文件（可选，根据需要调整）
+data/*.csv
+!data/.gitkeep
