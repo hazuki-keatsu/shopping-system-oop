@@ -20,7 +20,8 @@ Config::Config()
     : adminUsername("admin"),
       adminPassword("admin123"),
       usersFilePath("data/users.csv"),
-      itemsFilePath("data/items.csv") {
+      itemsFilePath("data/items.csv"),
+      shoppingCartFilePath("data/shopping_cart.csv") {
     // 设置默认值
 }
 
@@ -97,6 +98,8 @@ bool Config::parseConfigFile(const std::string& filename) {
                     usersFilePath = value;
                 } else if (key == "items") {
                     itemsFilePath = value;
+                } else if (key == "shopping_cart") {
+                    shoppingCartFilePath = value;
                 }
             }
         }

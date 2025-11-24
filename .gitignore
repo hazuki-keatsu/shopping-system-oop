@@ -16,7 +16,3 @@ Makefile
 *.swp
 *.swo
 *~
-
-# 数据文件（可选，根据需要调整）
-data/*.csv
-!data/.gitkeep

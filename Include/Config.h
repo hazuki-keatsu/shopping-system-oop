@@ -27,6 +27,7 @@ private:
     std::string adminPassword;      // 管理员密码
     std::string usersFilePath;      // 用户数据文件路径
     std::string itemsFilePath;      // 商品数据文件路径
+    std::string shoppingCartFilePath; // 购物车数据文件路径
     
     static Config* instance;        // 单例实例指针
     
@@ -86,6 +87,12 @@ public:
      * @return 商品数据文件路径
      */
     std::string getItemsFilePath() const { return itemsFilePath; }
+    
+    /**
+     * @brief 获取购物车数据文件路径
+     * @return 购物车数据文件路径
+     */
+    std::string getShoppingCartFilePath() const { return shoppingCartFilePath; }
     
     /**
      * @brief 析构函数

@@ -12,6 +12,8 @@
 #include "ItemManage/Item.h"
 #include "ItemManage/ItemManager.h"
 #include "ItemManage/ItemSearcher.h"
+#include "ShoppingCart/ShoppingCart.h"
+#include "ShoppingCart/ShoppingCartManager.h"
 #include <iostream>
 #include <string>
 #include <limits>
@@ -48,8 +50,9 @@ void showCustomerMenu() {
     std::cout << "\n===== 顾客菜单 =====" << std::endl;
     std::cout << "1. 查看商品信息" << std::endl;
     std::cout << "2. 搜索商品" << std::endl;
-    std::cout << "3. 修改密码" << std::endl;
-    std::cout << "4. 登出" << std::endl;
+    std::cout << "3. 我的购物车" << std::endl;
+    std::cout << "4. 修改密码" << std::endl;
+    std::cout << "5. 登出" << std::endl;
     std::cout << "=====================" << std::endl;
     std::cout << "请选择: ";
 }
@@ -412,6 +415,196 @@ void deleteItemProcess(ItemManager* itemManager) {
 }
 
 /**
+ * @brief 显示购物车菜单
+ */
+void showShoppingCartMenu() {
+    std::cout << "\n===== 购物车管理 =====" << std::endl;
+    std::cout << "1. 添加商品到购物车" << std::endl;
+    std::cout << "2. 查看购物车" << std::endl;
+    std::cout << "3. 修改商品数量" << std::endl;
+    std::cout << "4. 删除购物车中的商品" << std::endl;
+    std::cout << "5. 清空购物车" << std::endl;
+    std::cout << "0. 返回上级菜单" << std::endl;
+    std::cout << "======================" << std::endl;
+    std::cout << "请选择: ";
+}
+
+/**
+ * @brief 购物车管理流程
+ * @param cartManager 购物车管理器
+ * @param itemManager 商品管理器
+ * @param username 当前用户名
+ * @param customer 当前用户对象
+ */
+void shoppingCartProcess(ShoppingCartManager* cartManager, 
+                         ItemManager* itemManager,
+                         const std::string& username,
+                         std::shared_ptr<Customer> customer) {
+    // 获取用户的购物车
+    auto cart = cartManager->getCart(username, customer);
+    
+    bool inCartMenu = true;
+    while (inCartMenu) {
+        showShoppingCartMenu();
+        int choice;
+        std::cin >> choice;
+        
+        if (std::cin.fail()) {
+            clearInputBuffer();
+            std::cout << "无效输入，请输入数字。" << std::endl;
+            continue;
+        }
+        
+        switch (choice) {
+            case 1: {
+                // 添加商品到购物车
+                std::cout << "\n===== 添加商品到购物车 =====" << std::endl;
+                
+                // 显示所有商品
+                itemManager->displayAllItems();
+                
+                std::cout << "\n请输入要添加的商品ID: ";
+                std::string itemId;
+                std::cin >> itemId;
+                
+                auto item = itemManager->findItemById(itemId);
+                if (!item) {
+                    std::cout << "商品不存在！" << std::endl;
+                    break;
+                }
+                
+                std::cout << "请输入购买数量: ";
+                int quantity;
+                std::cin >> quantity;
+                
+                if (std::cin.fail()) {
+                    clearInputBuffer();
+                    std::cout << "数量输入无效！" << std::endl;
+                    break;
+                }
+                
+                cart->addItem(item, quantity);
+                // 保存购物车数据
+                cartManager->saveToFile();
+                break;
+            }
+            
+            case 2: {
+                // 查看购物车
+                cart->displayCart();
+                break;
+            }
+            
+            case 3: {
+                // 修改商品数量
+                if (cart->isEmpty()) {
+                    std::cout << "购物车是空的！" << std::endl;
+                    break;
+                }
+                
+                cart->displayCart();
+                
+                std::cout << "\n请输入要修改的商品ID: ";
+                std::string itemId;
+                std::cin >> itemId;
+                
+                std::cout << "请输入新的数量: ";
+                int newQuantity;
+                std::cin >> newQuantity;
+                
+                if (std::cin.fail()) {
+                    clearInputBuffer();
+                    std::cout << "数量输入无效！" << std::endl;
+                    break;
+                }
+                
+                cart->updateItemQuantity(itemId, newQuantity);
+                // 保存购物车数据
+                cartManager->saveToFile();
+                break;
+            }
+            
+            case 4: {
+                // 删除购物车中的商品
+                if (cart->isEmpty()) {
+                    std::cout << "购物车是空的！" << std::endl;
+                    break;
+                }
+                
+                cart->displayCart();
+                
+                std::cout << "\n请选择删除方式：" << std::endl;
+                std::cout << "1. 删除单个商品" << std::endl;
+                std::cout << "2. 删除多个商品" << std::endl;
+                std::cout << "请选择: ";
+                
+                int deleteChoice;
+                std::cin >> deleteChoice;
+                
+                if (std::cin.fail()) {
+                    clearInputBuffer();
+                    std::cout << "无效输入！" << std::endl;
+                    break;
+                }
+                
+                if (deleteChoice == 1) {
+                    std::cout << "请输入要删除的商品ID: ";
+                    std::string itemId;
+                    std::cin >> itemId;
+                    cart->removeItem(itemId);
+                } else if (deleteChoice == 2) {
+                    std::cout << "请输入要删除的商品ID（用空格分隔）: ";
+                    std::cin.ignore();
+                    std::string line;
+                    std::getline(std::cin, line);
+                    
+                    std::vector<std::string> itemIds;
+                    std::stringstream ss(line);
+                    std::string itemId;
+                    while (ss >> itemId) {
+                        itemIds.push_back(itemId);
+                    }
+                    
+                    int removedCount = cart->removeMultipleItems(itemIds);
+                    std::cout << "成功删除 " << removedCount << " 个商品。" << std::endl;
+                } else {
+                    std::cout << "无效选择！" << std::endl;
+                }
+                
+                // 保存购物车数据
+                cartManager->saveToFile();
+                break;
+            }
+            
+            case 5: {
+                // 清空购物车
+                std::cout << "确认清空购物车？(y/n): ";
+                char confirm;
+                std::cin >> confirm;
+                
+                if (confirm == 'y' || confirm == 'Y') {
+                    cart->clear();
+                    // 保存购物车数据
+                    cartManager->saveToFile();
+                } else {
+                    std::cout << "已取消操作。" << std::endl;
+                }
+                break;
+            }
+            
+            case 0:
+                // 返回上级菜单
+                inCartMenu = false;
+                break;
+                
+            default:
+                std::cout << "无效选择，请重新输入。" << std::endl;
+                break;
+        }
+    }
+}
+
+/**
  * @brief 搜索商品流程（顾客功能）
  * @param itemSearcher 商品搜索器
  */
@@ -499,12 +692,19 @@ int main() {
     UserManager userManager(config->getUsersFilePath());
     userManager.loadFromFile();
     
-    // 初始化商品管理器
-    ItemManager itemManager(config->getItemsFilePath());
-    itemManager.loadFromFile();
+    // 初始化商品管理器（使用shared_ptr以便在购物车管理器中共享）
+    auto itemManagerPtr = std::make_shared<ItemManager>(config->getItemsFilePath());
+    itemManagerPtr->loadFromFile();
+    
+    // 为了兼容性，创建一个引用
+    ItemManager& itemManager = *itemManagerPtr;
     
     // 初始化商品搜索器
-    ItemSearcher itemSearcher(&itemManager);
+    ItemSearcher itemSearcher(itemManagerPtr.get());
+    
+    // 初始化购物车管理器
+    ShoppingCartManager cartManager(config->getShoppingCartFilePath(), itemManagerPtr);
+    cartManager.loadFromFile();
     
     // 初始化登录系统
     LoginSystem loginSystem(&userManager, config);
@@ -584,12 +784,23 @@ int main() {
                     searchItemProcess(&itemSearcher);
                     break;
                     
-                case 3:
+                case 3: {
+                    // 我的购物车
+                    auto user = loginSystem.getCurrentUser();
+                    if (user) {
+                        std::string username = user->getUsername();
+                        auto customer = std::dynamic_pointer_cast<Customer>(user);
+                        shoppingCartProcess(&cartManager, &itemManager, username, customer);
+                    }
+                    break;
+                }
+                    
+                case 4:
                     // 修改密码
                     changePasswordProcess(&loginSystem);
                     break;
                     
-                case 4:
+                case 5:
                     // 登出
                     loginSystem.logout();
                     break;
