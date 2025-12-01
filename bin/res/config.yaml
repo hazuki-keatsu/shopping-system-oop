@@ -7,6 +7,6 @@ admin:
 
 # 数据文件路径
 data_files:
-  users: data/users.csv
-  items: data/items.csv
-  shopping_cart: data/shopping_cart.csv
+  users: res/data/users.csv
+  items: res/data/items.csv
+  shopping_cart: res/data/shopping_cart.csv

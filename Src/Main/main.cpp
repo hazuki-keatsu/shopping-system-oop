@@ -684,7 +684,7 @@ void searchItemProcess(ItemSearcher* itemSearcher) {
 int main() {
     // 初始化配置
     Config* config = Config::getInstance();
-    if (!config->loadConfig("config.yaml")) {
+    if (!config->loadConfig("res/config.yaml")) {
         std::cerr << "配置文件加载失败，使用默认配置。" << std::endl;
     }
     

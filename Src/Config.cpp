@@ -19,9 +19,9 @@ Config* Config::instance = nullptr;
 Config::Config() 
     : adminUsername("admin"),
       adminPassword("admin123"),
-      usersFilePath("data/users.csv"),
-      itemsFilePath("data/items.csv"),
-      shoppingCartFilePath("data/shopping_cart.csv") {
+      usersFilePath("res/data/users.csv"),
+      itemsFilePath("res/data/items.csv"),
+      shoppingCartFilePath("res/data/shopping_cart.csv") {
     // 设置默认值
 }
 
