@@ -1,7 +1,7 @@
 /**
  * @file main.cpp
  * @brief 购物系统主程序
- * @author Shopping System
+ * @author Hazuki Keatsu
  * @date 2025-11-15
  */
 
@@ -14,11 +14,14 @@
 #include "ItemManage/ItemSearcher.h"
 #include "ShoppingCart/ShoppingCart.h"
 #include "ShoppingCart/ShoppingCartManager.h"
+#include "Order/Order.h"
+#include "Order/OrderManager.h"
 #include <iostream>
 #include <string>
 #include <limits>
 #include <fstream>
 #include <sstream>
+#include <iomanip>
 
 /**
  * @brief 清空输入缓冲区
@@ -51,8 +54,9 @@ void showCustomerMenu() {
     std::cout << "1. 查看商品信息" << std::endl;
     std::cout << "2. 搜索商品" << std::endl;
     std::cout << "3. 我的购物车" << std::endl;
-    std::cout << "4. 修改密码" << std::endl;
-    std::cout << "5. 登出" << std::endl;
+    std::cout << "4. 我的订单" << std::endl;
+    std::cout << "5. 修改密码" << std::endl;
+    std::cout << "6. 登出" << std::endl;
     std::cout << "=====================" << std::endl;
     std::cout << "请选择: ";
 }
@@ -67,17 +71,89 @@ void showAdminMenu() {
     std::cout << "3. 添加商品" << std::endl;
     std::cout << "4. 修改商品" << std::endl;
     std::cout << "5. 删除商品" << std::endl;
-    std::cout << "6. 登出" << std::endl;
+    std::cout << "6. 订单管理" << std::endl;
+    std::cout << "7. 登出" << std::endl;
     std::cout << "======================" << std::endl;
     std::cout << "请选择: ";
+}
+
+/**
+ * @brief 处理购买输入的辅助函数
+ */
+void processPurchaseInput(ItemManager* itemManager, OrderManager* orderManager, LoginSystem* loginSystem) {
+    std::vector<std::pair<std::shared_ptr<Item>, int>> itemsToBuy;
+
+    while (true) {
+        if (itemsToBuy.empty()) {
+            std::cout << "\n请输入要购买的商品ID (输入0返回): ";
+        } else {
+            std::cout << "\n请输入下一个要购买的商品ID (输入0结算，输入-1取消): ";
+        }
+        
+        std::string itemId;
+        std::cin >> itemId;
+
+        if (itemId == "0") {
+            if (itemsToBuy.empty()) return;
+            break;
+        }
+        if (itemId == "-1") return;
+
+        // Check login
+        if (!loginSystem->isLoggedIn()) {
+            std::cout << "请先登录！" << std::endl;
+            return;
+        }
+
+        auto item = itemManager->findItemById(itemId);
+        if (!item) {
+            std::cout << "商品不存在！" << std::endl;
+            continue;
+        }
+
+        std::cout << "请输入购买数量: ";
+        int quantity;
+        std::cin >> quantity;
+
+        if (std::cin.fail() || quantity <= 0) {
+            clearInputBuffer();
+            std::cout << "无效数量！" << std::endl;
+            continue;
+        }
+
+        if (item->getStock() < quantity) {
+            std::cout << "库存不足！当前库存: " << item->getStock() << std::endl;
+            continue;
+        }
+
+        itemsToBuy.push_back({item, quantity});
+        std::cout << "已添加 " << item->getItemName() << " x" << quantity << " 到订单。" << std::endl;
+    }
+
+    std::cout << "请输入收货地址: ";
+    std::string address;
+    std::cin.ignore();
+    std::getline(std::cin, address);
+
+    auto user = loginSystem->getCurrentUser();
+    auto order = orderManager->createOrder(user->getUsername(), itemsToBuy, address);
+
+    if (order) {
+        orderManager->saveToFile();
+    } else {
+        std::cout << "订单创建失败！" << std::endl;
+    }
 }
 
 /**
  * @brief 查看商品信息（使用ItemManager）
  * @param itemManager 商品管理器
  */
-void viewItems(ItemManager* itemManager) {
+void viewItems(ItemManager* itemManager, OrderManager* orderManager = nullptr, LoginSystem* loginSystem = nullptr) {
     itemManager->displayAllItems();
+    if (orderManager && loginSystem) {
+        processPurchaseInput(itemManager, orderManager, loginSystem);
+    }
 }
 
 /**
@@ -415,6 +491,79 @@ void deleteItemProcess(ItemManager* itemManager) {
 }
 
 /**
+ * @brief 管理订单流程（管理员功能）
+ * @param orderManager 订单管理器
+ */
+void manageOrdersProcess(OrderManager* orderManager) {
+    while (true) {
+        std::cout << "\n===== 订单管理 =====" << std::endl;
+        orderManager->displayAllOrders();
+        
+        std::cout << "\n请选择操作：" << std::endl;
+        std::cout << "1. 修改订单状态" << std::endl;
+        std::cout << "0. 返回上级菜单" << std::endl;
+        std::cout << "请选择: ";
+        
+        int choice;
+        std::cin >> choice;
+        
+        if (std::cin.fail()) {
+            clearInputBuffer();
+            std::cout << "无效输入！" << std::endl;
+            continue;
+        }
+        
+        if (choice == 0) {
+            break;
+        } else if (choice == 1) {
+            std::cout << "请输入要修改的订单ID: ";
+            std::string orderId;
+            std::cin >> orderId;
+            
+            auto order = orderManager->findOrderById(orderId);
+            if (!order) {
+                std::cout << "订单不存在！" << std::endl;
+                continue;
+            }
+            
+            std::cout << "当前状态: " << order->getStatusString() << std::endl;
+            std::cout << "请选择新状态：" << std::endl;
+            std::cout << "1. 待发货 (PENDING)" << std::endl;
+            std::cout << "2. 已发货 (SHIPPED)" << std::endl;
+            std::cout << "3. 已签收 (DELIVERED)" << std::endl;
+            std::cout << "请选择 (1-3): ";
+            
+            int statusChoice;
+            std::cin >> statusChoice;
+            
+            if (std::cin.fail()) {
+                clearInputBuffer();
+                std::cout << "无效输入！" << std::endl;
+                continue;
+            }
+            
+            OrderStatus newStatus;
+            switch (statusChoice) {
+                case 1: newStatus = OrderStatus::PENDING; break;
+                case 2: newStatus = OrderStatus::SHIPPED; break;
+                case 3: newStatus = OrderStatus::DELIVERED; break;
+                default:
+                    std::cout << "无效选择！" << std::endl;
+                    continue;
+            }
+            
+            if (orderManager->updateOrderStatus(orderId, newStatus)) {
+                std::cout << "状态更新成功！" << std::endl;
+            } else {
+                std::cout << "状态更新失败！" << std::endl;
+            }
+        } else {
+            std::cout << "无效选择！" << std::endl;
+        }
+    }
+}
+
+/**
  * @brief 显示购物车菜单
  */
 void showShoppingCartMenu() {
@@ -424,6 +573,7 @@ void showShoppingCartMenu() {
     std::cout << "3. 修改商品数量" << std::endl;
     std::cout << "4. 删除购物车中的商品" << std::endl;
     std::cout << "5. 清空购物车" << std::endl;
+    std::cout << "6. 结算" << std::endl;
     std::cout << "0. 返回上级菜单" << std::endl;
     std::cout << "======================" << std::endl;
     std::cout << "请选择: ";
@@ -433,11 +583,13 @@ void showShoppingCartMenu() {
  * @brief 购物车管理流程
  * @param cartManager 购物车管理器
  * @param itemManager 商品管理器
+ * @param orderManager 订单管理器
  * @param username 当前用户名
  * @param customer 当前用户对象
  */
 void shoppingCartProcess(ShoppingCartManager* cartManager, 
                          ItemManager* itemManager,
+                         OrderManager* orderManager,
                          const std::string& username,
                          std::shared_ptr<Customer> customer) {
     // 获取用户的购物车
@@ -591,6 +743,28 @@ void shoppingCartProcess(ShoppingCartManager* cartManager,
                 }
                 break;
             }
+
+            case 6: {
+                // 结算
+                if (cart->isEmpty()) {
+                    std::cout << "购物车为空！" << std::endl;
+                    break;
+                }
+                std::cout << "请输入收货地址: ";
+                std::string address;
+                std::cin.ignore();
+                std::getline(std::cin, address);
+
+                auto order = orderManager->createOrder(username, cart->getCartItems(), address);
+                if (order) {
+                    cart->clear();
+                    cartManager->saveToFile();
+                    orderManager->saveToFile();
+                } else {
+                    std::cout << "订单创建失败！" << std::endl;
+                }
+                break;
+            }
             
             case 0:
                 // 返回上级菜单
@@ -608,7 +782,7 @@ void shoppingCartProcess(ShoppingCartManager* cartManager,
  * @brief 搜索商品流程（顾客功能）
  * @param itemSearcher 商品搜索器
  */
-void searchItemProcess(ItemSearcher* itemSearcher) {
+void searchItemProcess(ItemSearcher* itemSearcher, ItemManager* itemManager = nullptr, OrderManager* orderManager = nullptr, LoginSystem* loginSystem = nullptr) {
     std::string keyword;
     
     std::cout << "\n===== 搜索商品 =====" << std::endl;
@@ -676,6 +850,10 @@ void searchItemProcess(ItemSearcher* itemSearcher) {
     
     // 显示搜索结果
     itemSearcher->displaySearchResults(results, true);  // 显示相似度
+
+    if (itemManager && orderManager && loginSystem) {
+        processPurchaseInput(itemManager, orderManager, loginSystem);
+    }
 }
 
 /**
@@ -705,6 +883,13 @@ int main() {
     // 初始化购物车管理器
     ShoppingCartManager cartManager(config->getShoppingCartFilePath(), itemManagerPtr);
     cartManager.loadFromFile();
+
+    // 初始化订单管理器
+    OrderManager orderManager(config->getOrdersFilePath(), itemManagerPtr);
+    orderManager.loadFromFile();
+    if (config->isAutoUpdateEnabled()) {
+        orderManager.enableAutoUpdate(config->getPendingToShippedSeconds(), config->getShippedToDeliveredSeconds());
+    }
     
     // 初始化登录系统
     LoginSystem loginSystem(&userManager, config);
@@ -743,12 +928,12 @@ int main() {
                     break;
                     
                 case 4:
-                    // 查看商品信息
-                    searchItemProcess(&itemSearcher);
+                    // 搜索商品
+                    searchItemProcess(&itemSearcher, &itemManager, &orderManager, &loginSystem);
                     break;
                 case 5:
-                    // 查看所有上商品信息
-                    viewItems(&itemManager);
+                    // 查看所有商品
+                    viewItems(&itemManager, &orderManager, &loginSystem);
                     break;
                     
                 case 0:
@@ -776,12 +961,12 @@ int main() {
             switch (choice) {
                 case 1:
                     // 查看商品信息
-                    viewItems(&itemManager);
+                    viewItems(&itemManager, &orderManager, &loginSystem);
                     break;
                     
                 case 2:
                     // 搜索商品
-                    searchItemProcess(&itemSearcher);
+                    searchItemProcess(&itemSearcher, &itemManager, &orderManager, &loginSystem);
                     break;
                     
                 case 3: {
@@ -790,17 +975,59 @@ int main() {
                     if (user) {
                         std::string username = user->getUsername();
                         auto customer = std::dynamic_pointer_cast<Customer>(user);
-                        shoppingCartProcess(&cartManager, &itemManager, username, customer);
+                        shoppingCartProcess(&cartManager, &itemManager, &orderManager, username, customer);
                     }
                     break;
                 }
                     
-                case 4:
+                case 4: {
+                    // 我的订单
+                    auto user = loginSystem.getCurrentUser();
+                    if (user) {
+                        std::string username = user->getUsername();
+                        orderManager.displayUserOrders(username);
+                        
+                        while (true) {
+                            std::cout << "\n1. 查看订单详情" << std::endl;
+                            std::cout << "0. 返回" << std::endl;
+                            std::cout << "请选择: ";
+                            
+                            int detailChoice;
+                            std::cin >> detailChoice;
+                            
+                            if (std::cin.fail()) {
+                                clearInputBuffer();
+                                std::cout << "无效输入！" << std::endl;
+                                continue;
+                            }
+                            
+                            if (detailChoice == 0) {
+                                break;
+                            } else if (detailChoice == 1) {
+                                std::cout << "请输入订单ID: ";
+                                std::string orderId;
+                                std::cin >> orderId;
+                                
+                                auto order = orderManager.findOrderById(orderId);
+                                if (order && order->getUserId() == username) {
+                                    order->displayOrderInfo();
+                                } else {
+                                    std::cout << "未找到该订单或无权查看！" << std::endl;
+                                }
+                            } else {
+                                std::cout << "无效选择！" << std::endl;
+                            }
+                        }
+                    }
+                    break;
+                }
+
+                case 5:
                     // 修改密码
                     changePasswordProcess(&loginSystem);
                     break;
                     
-                case 5:
+                case 6:
                     // 登出
                     loginSystem.logout();
                     break;
@@ -846,8 +1073,13 @@ int main() {
                     // 删除商品
                     deleteItemProcess(&itemManager);
                     break;
-                    
+
                 case 6:
+                                                                                                               // 订单管理
+                    manageOrdersProcess(&orderManager);
+                    break;
+                    
+                case 7:
                     // 登出
                     loginSystem.logout();
                     break;

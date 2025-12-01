@@ -21,7 +21,11 @@ Config::Config()
       adminPassword("admin123"),
       usersFilePath("res/data/users.csv"),
       itemsFilePath("res/data/items.csv"),
-      shoppingCartFilePath("res/data/shopping_cart.csv") {
+      shoppingCartFilePath("res/data/shopping_cart.csv"),
+      ordersFilePath("res/data/orders.csv"),
+      autoUpdateEnabled(true),
+      pendingToShippedSeconds(10),
+      shippedToDeliveredSeconds(20) {
     // 设置默认值
 }
 
@@ -66,6 +70,10 @@ bool Config::parseConfigFile(const std::string& filename) {
     
     // 逐行解析配置文件
     while (std::getline(file, line)) {
+        // 保存原始行用于检查缩进
+        std::string originalLine = line;
+        
+        // 去除首尾空格用于解析内容
         line = trim(line);
         
         // 跳过空行和注释行
@@ -73,15 +81,18 @@ bool Config::parseConfigFile(const std::string& filename) {
             continue;
         }
         
+        // 检查是否有缩进（通过原始行）
+        bool isIndented = (originalLine.find_first_not_of(" \t") > 0);
+        
         // 识别section（不包含缩进的行）
-        if (line.find(':') != std::string::npos && line[0] != ' ') {
+        if (line.find(':') != std::string::npos && !isIndented) {
             size_t colonPos = line.find(':');
             currentSection = trim(line.substr(0, colonPos));
             continue;
         }
         
         // 解析键值对（包含缩进的行）
-        if (line[0] == ' ' && line.find(':') != std::string::npos) {
+        if (line.find(':') != std::string::npos && isIndented) {
             size_t colonPos = line.find(':');
             std::string key = trim(line.substr(0, colonPos));
             std::string value = trim(line.substr(colonPos + 1));
@@ -100,6 +111,28 @@ bool Config::parseConfigFile(const std::string& filename) {
                     itemsFilePath = value;
                 } else if (key == "shopping_cart") {
                     shoppingCartFilePath = value;
+                } else if (key == "orders") {
+                    ordersFilePath = value;
+                }
+            } else if (currentSection == "order_settings") {
+                if (key == "auto_update") {
+                    if (value == "true" || value == "True" || value == "TRUE") {
+                        autoUpdateEnabled = true;
+                    } else {
+                        autoUpdateEnabled = false;
+                    }
+                } else if (key == "pending_to_shipped_seconds") {
+                    try {
+                        pendingToShippedSeconds = std::stoi(value);
+                    } catch (...) {
+                        std::cerr << "警告：解析 pending_to_shipped_seconds 失败，使用默认值。" << std::endl;
+                    }
+                } else if (key == "shipped_to_delivered_seconds") {
+                    try {
+                        shippedToDeliveredSeconds = std::stoi(value);
+                    } catch (...) {
+                        std::cerr << "警告：解析 shipped_to_delivered_seconds 失败，使用默认值。" << std::endl;
+                    }
                 }
             }
         }

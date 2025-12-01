@@ -10,3 +10,10 @@ data_files:
   users: res/data/users.csv
   items: res/data/items.csv
   shopping_cart: res/data/shopping_cart.csv
+  orders: res/data/orders.csv
+
+# 订单自动化配置
+order_settings:
+  auto_update: false
+  pending_to_shipped_seconds: 10
+  shipped_to_delivered_seconds: 20

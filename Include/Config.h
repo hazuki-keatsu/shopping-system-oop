@@ -28,7 +28,13 @@ private:
     std::string usersFilePath;      // 用户数据文件路径
     std::string itemsFilePath;      // 商品数据文件路径
     std::string shoppingCartFilePath; // 购物车数据文件路径
+    std::string ordersFilePath;     // 订单数据文件路径
     
+    // 自动更新时间配置
+    bool autoUpdateEnabled;         // 是否开启自动更新
+    int pendingToShippedSeconds;    // 待发货到已发货的秒数
+    int shippedToDeliveredSeconds;  // 已发货到已签收的秒数
+
     static Config* instance;        // 单例实例指针
     
     /**
@@ -93,6 +99,30 @@ public:
      * @return 购物车数据文件路径
      */
     std::string getShoppingCartFilePath() const { return shoppingCartFilePath; }
+    
+    /**
+     * @brief 获取订单数据文件路径
+     * @return 订单数据文件路径
+     */
+    std::string getOrdersFilePath() const { return ordersFilePath; }
+
+    /**
+     * @brief 获取是否开启自动更新
+     * @return true开启，false关闭
+     */
+    bool isAutoUpdateEnabled() const { return autoUpdateEnabled; }
+
+    /**
+     * @brief 获取待发货到已发货的秒数
+     * @return 秒数
+     */
+    int getPendingToShippedSeconds() const { return pendingToShippedSeconds; }
+
+    /**
+     * @brief 获取已发货到已签收的秒数
+     * @return 秒数
+     */
+    int getShippedToDeliveredSeconds() const { return shippedToDeliveredSeconds; }
     
     /**
      * @brief 析构函数
