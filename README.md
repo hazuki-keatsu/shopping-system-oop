@@ -34,6 +34,28 @@
 - **智能策略**：先精确搜索，无结果自动切换模糊搜索
 - **结果展示**：表格化显示，支持相似度百分比
 
+### 5. 促销管理（管理员和顾客功能）⭐最新
+- **折扣促销**
+  - 支持针对特定商品或全场折扣
+  - 设置折扣率（如8折、9折）
+  - 商品列表自动显示折扣标签
+- **满减促销**
+  - 设置满减门槛和减免金额
+  - 支持多档满减叠加
+  - 自动计算优惠总额
+- **促销叠加**
+  - 折扣优先计算，再计算满减
+  - 订单预览展示详细优惠明细
+  - 显示原价、折扣价、满减后价格
+- **促销管理**（管理员功能）
+  - 添加/删除/启用/禁用促销活动
+  - 设置促销有效期
+  - 查看所有或有效的促销活动
+- **购物体验优化**
+  - 下单前展示促销预览和确认
+  - 显示节省金额和优惠详情
+  - 用户可选择确认或取消下单
+
 ## 技术架构
 
 ### 设计原则
@@ -59,10 +81,20 @@ shopping/
 │   ├── UserManage/
 │   │   ├── User.h          # 用户基类和子类
 │   │   └── UserManager.h   # 用户管理器
-│   └── ItemManage/         # ⭐新增商品管理模块
-│       ├── Item.h          # 商品类
-│       ├── ItemManager.h   # 商品管理器
-│       └── ItemSearcher.h  # 商品搜索器
+│   ├── ItemManage/         # 商品管理模块
+│   │   ├── Item.h          # 商品类
+│   │   ├── ItemManager.h   # 商品管理器
+│   │   └── ItemSearcher.h  # 商品搜索器
+│   ├── ShoppingCart/       # 购物车模块
+│   │   ├── ShoppingCart.h  # 购物车类
+│   │   └── ShoppingCartManager.h # 购物车管理器
+│   ├── Order/              # 订单模块
+│   │   ├── Order.h         # 订单类
+│   │   ├── OrderManager.h  # 订单管理器
+│   │   └── OrderException.h # 订单异常类
+│   └── Promotion/          # ⭐促销管理模块
+│       ├── Promotion.h     # 促销活动类
+│       └── PromotionManager.h # 促销管理器
 ├── Src/                    # 源文件目录
 │   ├── Config.cpp
 │   ├── Login/
@@ -72,13 +104,27 @@ shopping/
 │   ├── UserManage/
 │   │   ├── User.cpp
 │   │   └── UserManager.cpp
-│   └── ItemManage/         # ⭐新增商品管理实现
-│       ├── Item.cpp
-│       ├── ItemManager.cpp
-│       └── ItemSearcher.cpp
-├── data/                   # 数据文件目录
-│   ├── users.csv           # 用户数据文件
-│   └── items.csv           # 商品数据文件（含类别和描述）
+│   ├── ItemManage/
+│   │   ├── Item.cpp
+│   │   ├── ItemManager.cpp
+│   │   └── ItemSearcher.cpp
+│   ├── ShoppingCart/
+│   │   ├── ShoppingCart.cpp
+│   │   └── ShoppingCartManager.cpp
+│   ├── Order/
+│   │   ├── Order.cpp
+│   │   └── OrderManager.cpp
+│   └── Promotion/          # ⭐促销管理实现
+│       ├── Promotion.cpp
+│       └── PromotionManager.cpp
+├── res/                    # 资源文件目录
+│   ├── config.yaml         # 系统配置文件
+│   └── data/               # 数据文件目录
+│       ├── users.csv       # 用户数据文件
+│       ├── items.csv       # 商品数据文件
+│       ├── shopping_cart.csv # 购物车数据文件
+│       ├── orders.csv      # 订单数据文件
+│       └── promotions.csv  # ⭐促销数据文件
 └── bin/                    # 编译输出目录
 ```
 │   │   └── main.cpp        # 主程序入口
@@ -193,8 +239,17 @@ admin:
 
 # 数据文件路径
 data_files:
-  users: data/users.csv
-  items: data/items.csv
+  users: res/data/users.csv
+  items: res/data/items.csv
+  shopping_cart: res/data/shopping_cart.csv
+  orders: res/data/orders.csv
+  promotions: res/data/promotions.csv  # 促销数据文件
+
+# 订单自动化配置
+order_settings:
+  auto_update: false
+  pending_to_shipped_seconds: 10
+  shipped_to_delivered_seconds: 20
 ```
 
 ### users.csv

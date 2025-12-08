@@ -6,6 +6,7 @@
  */
 
 #include "ItemManage/ItemManager.h"
+#include "Promotion/PromotionManager.h"
 #include <fstream>
 #include <sstream>
 #include <iostream>
@@ -261,8 +262,10 @@ std::vector<std::string> ItemManager::getAllCategories() const {
 
 /**
  * @brief 显示所有商品信息（表格形式）
+ * 
+ * 如果提供了 PromotionManager，会在商品名称后显示促销标签
  */
-void ItemManager::displayAllItems() const {
+void ItemManager::displayAllItems(PromotionManager* promotionManager) const {
     if (items.empty()) {
         std::cout << "暂无商品信息。" << std::endl;
         return;
@@ -271,7 +274,7 @@ void ItemManager::displayAllItems() const {
     std::cout << "\n========== 商品列表 ==========" << std::endl;
     std::cout << std::left
               << std::setw(8) << "ID"
-              << std::setw(20) << "名称"
+              << std::setw(25) << "名称"
               << std::setw(12) << "类别"
               << std::setw(10) << "价格"
               << std::setw(30) << "描述"
@@ -280,9 +283,20 @@ void ItemManager::displayAllItems() const {
     std::cout << "-------------------------------------------------------------------------------------" << std::endl;
     
     for (const auto& item : items) {
+        // 构建商品名称（包含促销标签）
+        std::string itemNameWithTag = item->getItemName();
+        
+        // 如果提供了促销管理器，检查是否有促销活动
+        if (promotionManager != nullptr) {
+            auto discount = promotionManager->getActiveDiscountForItem(item->getItemId());
+            if (discount != nullptr) {
+                itemNameWithTag += " [" + discount->getDisplayTag() + "]";
+            }
+        }
+        
         std::cout << std::left
                   << std::setw(8) << item->getItemId()
-                  << std::setw(20) << item->getItemName()
+                  << std::setw(25) << itemNameWithTag
                   << std::setw(12) << item->getCategory()
                   << std::setw(10) << std::fixed << std::setprecision(2) << item->getPrice()
                   << std::setw(30) << item->getDescription()
@@ -292,6 +306,19 @@ void ItemManager::displayAllItems() const {
     
     std::cout << "=============================" << std::endl;
     std::cout << "共 " << items.size() << " 件商品。" << std::endl;
+    
+    // 显示当前有效的满减活动
+    if (promotionManager != nullptr) {
+        auto fullReductions = promotionManager->getActiveFullReductions();
+        if (!fullReductions.empty()) {
+            std::cout << "\n【当前满减活动】：";
+            for (size_t i = 0; i < fullReductions.size(); ++i) {
+                if (i > 0) std::cout << "、";
+                std::cout << fullReductions[i]->getDisplayTag();
+            }
+            std::cout << std::endl;
+        }
+    }
 }
 
 /**

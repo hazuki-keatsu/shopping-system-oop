@@ -14,6 +14,9 @@
 #include <memory>
 #include <string>
 
+// 前向声明
+class PromotionManager;
+
 /**
  * @class ItemManager
  * @brief 商品管理器类，负责商品的增删改查和CSV文件操作
@@ -124,8 +127,9 @@ public:
     
     /**
      * @brief 显示所有商品信息（表格形式）
+     * @param promotionManager 促销管理器指针（可选，用于显示促销标签）
      */
-    void displayAllItems() const;
+    void displayAllItems(PromotionManager* promotionManager = nullptr) const;
     
     /**
      * @brief 检查商品ID是否存在

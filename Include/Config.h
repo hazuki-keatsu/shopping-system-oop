@@ -29,6 +29,7 @@ private:
     std::string itemsFilePath;      // 商品数据文件路径
     std::string shoppingCartFilePath; // 购物车数据文件路径
     std::string ordersFilePath;     // 订单数据文件路径
+    std::string promotionsFilePath; // 促销数据文件路径
     
     // 自动更新时间配置
     bool autoUpdateEnabled;         // 是否开启自动更新
@@ -105,6 +106,12 @@ public:
      * @return 订单数据文件路径
      */
     std::string getOrdersFilePath() const { return ordersFilePath; }
+    
+    /**
+     * @brief 获取促销数据文件路径
+     * @return 促销数据文件路径
+     */
+    std::string getPromotionsFilePath() const { return promotionsFilePath; }
 
     /**
      * @brief 获取是否开启自动更新

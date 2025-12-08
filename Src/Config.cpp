@@ -23,6 +23,7 @@ Config::Config()
       itemsFilePath("res/data/items.csv"),
       shoppingCartFilePath("res/data/shopping_cart.csv"),
       ordersFilePath("res/data/orders.csv"),
+      promotionsFilePath("res/data/promotions.csv"),
       autoUpdateEnabled(true),
       pendingToShippedSeconds(10),
       shippedToDeliveredSeconds(20) {
@@ -113,6 +114,8 @@ bool Config::parseConfigFile(const std::string& filename) {
                     shoppingCartFilePath = value;
                 } else if (key == "orders") {
                     ordersFilePath = value;
+                } else if (key == "promotions") {
+                    promotionsFilePath = value;
                 }
             } else if (currentSection == "order_settings") {
                 if (key == "auto_update") {

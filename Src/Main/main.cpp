@@ -16,6 +16,8 @@
 #include "ShoppingCart/ShoppingCartManager.h"
 #include "Order/Order.h"
 #include "Order/OrderManager.h"
+#include "Promotion/Promotion.h"
+#include "Promotion/PromotionManager.h"
 #include <iostream>
 #include <string>
 #include <limits>
@@ -72,15 +74,111 @@ void showAdminMenu() {
     std::cout << "4. 修改商品" << std::endl;
     std::cout << "5. 删除商品" << std::endl;
     std::cout << "6. 订单管理" << std::endl;
-    std::cout << "7. 登出" << std::endl;
+    std::cout << "7. 促销管理" << std::endl;
+    std::cout << "8. 登出" << std::endl;
     std::cout << "======================" << std::endl;
     std::cout << "请选择: ";
 }
 
 /**
- * @brief 处理购买输入的辅助函数
+ * @brief 展示订单促销预览并确认
+ * @param items 商品列表
+ * @param promotionManager 促销管理器
+ * @return 用户是否确认下单
  */
-void processPurchaseInput(ItemManager* itemManager, OrderManager* orderManager, LoginSystem* loginSystem) {
+bool confirmOrderWithPromotion(
+    const std::vector<std::pair<std::shared_ptr<Item>, int>>& items,
+    PromotionManager* promotionManager
+) {
+    if (!promotionManager) {
+        // 如果没有促销管理器，直接返回确认
+        return true;
+    }
+    
+    // 计算促销结果
+    PromotionResult result = promotionManager->calculatePromotionResult(items);
+    
+    // 展示订单预览
+    std::cout << "\n========== 订单预览 ==========" << std::endl;
+    std::cout << "商品明细：" << std::endl;
+    for (const auto& [item, quantity] : items) {
+        std::cout << "  " << item->getItemName() << " x" << quantity 
+                  << " = ¥" << std::fixed << std::setprecision(2) 
+                  << (item->getPrice() * quantity);
+        
+        // 检查是否有折扣
+        auto discount = promotionManager->getActiveDiscountForItem(item->getItemId());
+        if (discount) {
+            std::cout << " [" << discount->getDisplayTag() << "]";
+        }
+        std::cout << std::endl;
+    }
+    
+    std::cout << "--------------------------------" << std::endl;
+    std::cout << "商品原价：¥" << std::fixed << std::setprecision(2) 
+              << result.originalTotal << std::endl;
+    
+    // 显示折扣明细
+    if (!result.itemDiscounts.empty()) {
+        double totalDiscount = 0;
+        for (const auto& [itemName, discount] : result.itemDiscounts) {
+            totalDiscount += discount;
+        }
+        std::cout << "折扣优惠：-¥" << std::fixed << std::setprecision(2) 
+                  << totalDiscount << "（";
+        for (size_t i = 0; i < result.appliedPromotions.size(); ++i) {
+            if (result.appliedPromotions[i].find("满") == std::string::npos) {
+                if (i > 0) std::cout << "、";
+                std::cout << result.appliedPromotions[i];
+            }
+        }
+        std::cout << "）" << std::endl;
+        std::cout << "小计：¥" << std::fixed << std::setprecision(2) 
+                  << result.afterDiscountTotal << std::endl;
+    }
+    
+    // 显示满减优惠
+    if (result.totalReduction > 0) {
+        std::cout << "满减优惠：-¥" << std::fixed << std::setprecision(2) 
+                  << result.totalReduction << "（";
+        bool first = true;
+        for (const auto& promo : result.appliedPromotions) {
+            if (promo.find("满") != std::string::npos) {
+                if (!first) std::cout << "、";
+                std::cout << promo;
+                first = false;
+            }
+        }
+        std::cout << "）" << std::endl;
+    }
+    
+    std::cout << "==============================" << std::endl;
+    std::cout << "实付金额：¥" << std::fixed << std::setprecision(2) 
+              << result.finalTotal;
+    
+    if (result.totalSavings > 0) {
+        std::cout << " 【已省¥" << std::fixed << std::setprecision(2) 
+                  << result.totalSavings << "】";
+    }
+    std::cout << std::endl;
+    std::cout << "==============================" << std::endl;
+    
+    // 确认下单
+    std::cout << "\n是否确认下单？(y/n): ";
+    char confirm;
+    std::cin >> confirm;
+    
+    return (confirm == 'y' || confirm == 'Y');
+}
+
+/**
+ * @brief 处理购买输入的辅助函数
+ * @param itemManager 商品管理器
+ * @param orderManager 订单管理器
+ * @param loginSystem 登录系统
+ * @param promotionManager 促销管理器（可选）
+ */
+void processPurchaseInput(ItemManager* itemManager, OrderManager* orderManager, LoginSystem* loginSystem, PromotionManager* promotionManager = nullptr) {
     std::vector<std::pair<std::shared_ptr<Item>, int>> itemsToBuy;
 
     while (true) {
@@ -129,6 +227,12 @@ void processPurchaseInput(ItemManager* itemManager, OrderManager* orderManager, 
         itemsToBuy.push_back({item, quantity});
         std::cout << "已添加 " << item->getItemName() << " x" << quantity << " 到订单。" << std::endl;
     }
+    
+    // 展示促销预览并确认订单
+    if (!confirmOrderWithPromotion(itemsToBuy, promotionManager)) {
+        std::cout << "已取消下单。" << std::endl;
+        return;
+    }
 
     std::cout << "请输入收货地址: ";
     std::string address;
@@ -148,11 +252,14 @@ void processPurchaseInput(ItemManager* itemManager, OrderManager* orderManager, 
 /**
  * @brief 查看商品信息（使用ItemManager）
  * @param itemManager 商品管理器
+ * @param orderManager 订单管理器（可选）
+ * @param loginSystem 登录系统（可选）
+ * @param promotionManager 促销管理器（可选）
  */
-void viewItems(ItemManager* itemManager, OrderManager* orderManager = nullptr, LoginSystem* loginSystem = nullptr) {
-    itemManager->displayAllItems();
+void viewItems(ItemManager* itemManager, OrderManager* orderManager = nullptr, LoginSystem* loginSystem = nullptr, PromotionManager* promotionManager = nullptr) {
+    itemManager->displayAllItems(promotionManager);
     if (orderManager && loginSystem) {
-        processPurchaseInput(itemManager, orderManager, loginSystem);
+        processPurchaseInput(itemManager, orderManager, loginSystem, promotionManager);
     }
 }
 
@@ -564,6 +671,364 @@ void manageOrdersProcess(OrderManager* orderManager) {
 }
 
 /**
+ * @brief 促销管理流程（管理员功能）
+ * @param promotionManager 促销管理器
+ */
+void managePromotionsProcess(PromotionManager* promotionManager, ItemManager* itemManager) {
+    while (true) {
+        std::cout << "\n===== 促销管理 =====" << std::endl;
+        std::cout << "1. 查看所有促销活动" << std::endl;
+        std::cout << "2. 查看有效促销活动" << std::endl;
+        std::cout << "3. 添加折扣促销" << std::endl;
+        std::cout << "4. 添加满减促销" << std::endl;
+        std::cout << "5. 修改促销信息" << std::endl;
+        std::cout << "6. 启用/禁用促销" << std::endl;
+        std::cout << "7. 删除促销活动" << std::endl;
+        std::cout << "0. 返回上级菜单" << std::endl;
+        std::cout << "======================" << std::endl;
+        std::cout << "请选择: ";
+        
+        int choice;
+        std::cin >> choice;
+        
+        if (std::cin.fail()) {
+            clearInputBuffer();
+            std::cout << "无效输入！" << std::endl;
+            continue;
+        }
+        
+        if (choice == 0) {
+            break;
+        } else if (choice == 1) {
+            // 查看所有促销活动
+            promotionManager->displayAllPromotions();
+        } else if (choice == 2) {
+            // 查看有效促销活动
+            promotionManager->displayActivePromotions();
+        } else if (choice == 3) {
+            // 添加折扣促销
+            std::cout << "\n===== 添加折扣促销 =====" << std::endl;
+            std::cout << "请输入促销名称: ";
+            std::string name;
+            std::cin.ignore();
+            std::getline(std::cin, name);
+            
+            std::cout << "请输入目标商品ID（输入-1表示全场折扣）: ";
+            std::string itemId;
+            std::getline(std::cin, itemId);
+            
+            // 空输入转换为-1
+            if (itemId.empty()) {
+                itemId = "-1";
+            }
+            
+            // 如果不是全场促销，检查商品是否存在
+            if (itemId != "-1" && !itemManager->findItemById(itemId)) {
+                std::cout << "商品ID不存在！" << std::endl;
+                continue;
+            }
+            
+            std::cout << "请输入折扣率（如0.8表示8折）: ";
+            double rate;
+            std::cin >> rate;
+            
+            if (std::cin.fail() || rate <= 0 || rate >= 1) {
+                clearInputBuffer();
+                std::cout << "无效的折扣率！" << std::endl;
+                continue;
+            }
+            
+            std::cout << "请输入有效天数: ";
+            int days;
+            std::cin >> days;
+            
+            if (std::cin.fail() || days <= 0) {
+                clearInputBuffer();
+                std::cout << "无效的天数！" << std::endl;
+                continue;
+            }
+            
+            time_t now = time(nullptr);
+            time_t endTime = now + (days * 24 * 60 * 60);
+            
+            std::string promotionId = promotionManager->generatePromotionId();
+            auto promotion = std::make_shared<Promotion>(
+                promotionId, name, true, now, endTime, itemId, rate
+            );
+            
+            if (promotionManager->addPromotion(promotion)) {
+                std::cout << "折扣促销添加成功！促销ID: " << promotionId << std::endl;
+            } else {
+                std::cout << "折扣促销添加失败！" << std::endl;
+            }
+        } else if (choice == 4) {
+            // 添加满减促销
+            std::cout << "\n===== 添加满减促销 =====" << std::endl;
+            std::cout << "请输入促销名称: ";
+            std::string name;
+            std::cin.ignore();
+            std::getline(std::cin, name);
+            
+            std::cout << "请输入满减门槛金额: ";
+            double threshold;
+            std::cin >> threshold;
+            
+            if (std::cin.fail() || threshold <= 0) {
+                clearInputBuffer();
+                std::cout << "无效的金额！" << std::endl;
+                continue;
+            }
+            
+            std::cout << "请输入减免金额: ";
+            double reduction;
+            std::cin >> reduction;
+            
+            if (std::cin.fail() || reduction <= 0 || reduction >= threshold) {
+                clearInputBuffer();
+                std::cout << "无效的减免金额！" << std::endl;
+                continue;
+            }
+            
+            std::cout << "请输入有效天数: ";
+            int days;
+            std::cin >> days;
+            
+            if (std::cin.fail() || days <= 0) {
+                clearInputBuffer();
+                std::cout << "无效的天数！" << std::endl;
+                continue;
+            }
+            
+            time_t now = time(nullptr);
+            time_t endTime = now + (days * 24 * 60 * 60);
+            
+            std::string promotionId = promotionManager->generatePromotionId();
+            auto promotion = std::make_shared<Promotion>(
+                promotionId, name, true, now, endTime, threshold, reduction
+            );
+            
+            if (promotionManager->addPromotion(promotion)) {
+                std::cout << "满减促销添加成功！促销ID: " << promotionId << std::endl;
+            } else {
+                std::cout << "满减促销添加失败！" << std::endl;
+            }
+        } else if (choice == 5) {
+            // 修改促销信息
+            promotionManager->displayAllPromotions();
+            std::cout << "\n请输入要修改的促销ID: ";
+            std::string promotionId;
+            std::cin >> promotionId;
+            
+            auto promotion = promotionManager->findPromotionById(promotionId);
+            if (!promotion) {
+                std::cout << "促销活动不存在！" << std::endl;
+                continue;
+            }
+            
+            // 显示当前促销信息
+            std::cout << "\n当前促销信息：" << std::endl;
+            std::cout << "ID: " << promotion->getPromotionId() << std::endl;
+            std::cout << "名称: " << promotion->getPromotionName() << std::endl;
+            std::cout << "类型: " << (promotion->getPromotionType() == PromotionType::DISCOUNT ? "折扣促销" : "满减促销") << std::endl;
+            std::cout << "状态: " << (promotion->getIsActive() ? "启用" : "禁用") << std::endl;
+            
+            if (promotion->getPromotionType() == PromotionType::DISCOUNT) {
+                std::cout << "目标商品: " << (promotion->getTargetItemId() == "-1" ? "全场" : promotion->getTargetItemId()) << std::endl;
+                std::cout << "折扣率: " << promotion->getDiscountRate() << " (" << promotion->getDisplayTag() << ")" << std::endl;
+            } else {
+                std::cout << "门槛金额: " << promotion->getThresholdAmount() << std::endl;
+                std::cout << "减免金额: " << promotion->getReductionAmount() << std::endl;
+            }
+            
+            // 修改菜单
+            bool modifying = true;
+            while (modifying) {
+                std::cout << "\n请选择要修改的项：" << std::endl;
+                std::cout << "1. 修改名称" << std::endl;
+                std::cout << "2. 修改有效期" << std::endl;
+                if (promotion->getPromotionType() == PromotionType::DISCOUNT) {
+                    std::cout << "3. 修改折扣率" << std::endl;
+                    std::cout << "4. 修改目标商品" << std::endl;
+                } else {
+                    std::cout << "3. 修改门槛金额" << std::endl;
+                    std::cout << "4. 修改减免金额" << std::endl;
+                }
+                std::cout << "0. 完成修改" << std::endl;
+                std::cout << "请选择: ";
+                
+                int modChoice;
+                std::cin >> modChoice;
+                
+                if (std::cin.fail()) {
+                    clearInputBuffer();
+                    std::cout << "无效输入！" << std::endl;
+                    continue;
+                }
+                
+                if (modChoice == 0) {
+                    modifying = false;
+                    break;
+                } else if (modChoice == 1) {
+                    // 修改名称
+                    std::cout << "请输入新名称: ";
+                    std::string newName;
+                    std::cin.ignore();
+                    std::getline(std::cin, newName);
+                    
+                    if (promotionManager->updatePromotionName(promotionId, newName)) {
+                        std::cout << "名称修改成功！" << std::endl;
+                    } else {
+                        std::cout << "名称修改失败！" << std::endl;
+                    }
+                } else if (modChoice == 2) {
+                    // 修改有效期
+                    std::cout << "请输入新的有效天数: ";
+                    int days;
+                    std::cin >> days;
+                    
+                    if (std::cin.fail() || days <= 0) {
+                        clearInputBuffer();
+                        std::cout << "无效的天数！" << std::endl;
+                        continue;
+                    }
+                    
+                    time_t now = time(nullptr);
+                    time_t endTime = now + (days * 24 * 60 * 60);
+                    
+                    if (promotionManager->updatePromotionTime(promotionId, now, endTime)) {
+                        std::cout << "有效期修改成功！" << std::endl;
+                    } else {
+                        std::cout << "有效期修改失败！" << std::endl;
+                    }
+                } else if (modChoice == 3) {
+                    if (promotion->getPromotionType() == PromotionType::DISCOUNT) {
+                        // 修改折扣率
+                        std::cout << "请输入新的折扣率（如0.8表示8折）: ";
+                        double newRate;
+                        std::cin >> newRate;
+                        
+                        if (std::cin.fail()) {
+                            clearInputBuffer();
+                            std::cout << "无效输入！" << std::endl;
+                            continue;
+                        }
+                        
+                        if (promotionManager->updateDiscountRate(promotionId, newRate)) {
+                            std::cout << "折扣率修改成功！" << std::endl;
+                        } else {
+                            std::cout << "折扣率修改失败！" << std::endl;
+                        }
+                    } else {
+                        // 修改门槛金额
+                        std::cout << "请输入新的门槛金额: ";
+                        double newThreshold;
+                        std::cin >> newThreshold;
+                        
+                        if (std::cin.fail()) {
+                            clearInputBuffer();
+                            std::cout << "无效输入！" << std::endl;
+                            continue;
+                        }
+                        
+                        if (promotionManager->updateFullReductionThreshold(promotionId, newThreshold)) {
+                            std::cout << "门槛金额修改成功！" << std::endl;
+                        } else {
+                            std::cout << "门槛金额修改失败！" << std::endl;
+                        }
+                    }
+                } else if (modChoice == 4) {
+                    if (promotion->getPromotionType() == PromotionType::DISCOUNT) {
+                        // 修改目标商品
+                        std::cout << "请输入新的目标商品ID（输入-1表示全场）: ";
+                        std::string newItemId;
+                        std::cin.ignore();
+                        std::getline(std::cin, newItemId);
+                        
+                        // 空输入转换为-1
+                        if (newItemId.empty()) {
+                            newItemId = "-1";
+                        }
+                        
+                        // 如果不是全场促销，检查商品是否存在
+                        if (newItemId != "-1" && !itemManager->findItemById(newItemId)) {
+                            std::cout << "商品ID不存在！" << std::endl;
+                            continue;
+                        }
+                        
+                        if (promotionManager->updateDiscountTargetItem(promotionId, newItemId)) {
+                            std::cout << "目标商品修改成功！" << std::endl;
+                        } else {
+                            std::cout << "目标商品修改失败！" << std::endl;
+                        }
+                    } else {
+                        // 修改减免金额
+                        std::cout << "请输入新的减免金额: ";
+                        double newReduction;
+                        std::cin >> newReduction;
+                        
+                        if (std::cin.fail()) {
+                            clearInputBuffer();
+                            std::cout << "无效输入！" << std::endl;
+                            continue;
+                        }
+                        
+                        if (promotionManager->updateFullReductionAmount(promotionId, newReduction)) {
+                            std::cout << "减免金额修改成功！" << std::endl;
+                        } else {
+                            std::cout << "减免金额修改失败！" << std::endl;
+                        }
+                    }
+                } else {
+                    std::cout << "无效选择！" << std::endl;
+                }
+            }
+        } else if (choice == 6) {
+            // 启用/禁用促销
+            promotionManager->displayAllPromotions();
+            std::cout << "\n请输入要修改的促销ID: ";
+            std::string promotionId;
+            std::cin >> promotionId;
+            
+            auto promotion = promotionManager->findPromotionById(promotionId);
+            if (!promotion) {
+                std::cout << "促销活动不存在！" << std::endl;
+                continue;
+            }
+            
+            bool currentStatus = promotion->getIsActive();
+            
+            if (promotionManager->setPromotionActive(promotionId, !currentStatus)) {
+                std::cout << "促销状态已" << (!currentStatus ? "启用" : "禁用") << "！" << std::endl;
+            } else {
+                std::cout << "状态修改失败！" << std::endl;
+            }
+        } else if (choice == 7) {
+            // 删除促销活动
+            promotionManager->displayAllPromotions();
+            std::cout << "\n请输入要删除的促销ID: ";
+            std::string promotionId;
+            std::cin >> promotionId;
+            
+            std::cout << "确认删除促销活动？(y/n): ";
+            char confirm;
+            std::cin >> confirm;
+            
+            if (confirm == 'y' || confirm == 'Y') {
+                if (promotionManager->deletePromotion(promotionId)) {
+                    std::cout << "促销活动已删除！" << std::endl;
+                } else {
+                    std::cout << "删除失败！" << std::endl;
+                }
+            } else {
+                std::cout << "已取消操作。" << std::endl;
+            }
+        } else {
+            std::cout << "无效选择！" << std::endl;
+        }
+    }
+}
+
+/**
  * @brief 显示购物车菜单
  */
 void showShoppingCartMenu() {
@@ -586,12 +1051,14 @@ void showShoppingCartMenu() {
  * @param orderManager 订单管理器
  * @param username 当前用户名
  * @param customer 当前用户对象
+ * @param promotionManager 促销管理器（可选）
  */
 void shoppingCartProcess(ShoppingCartManager* cartManager, 
                          ItemManager* itemManager,
                          OrderManager* orderManager,
                          const std::string& username,
-                         std::shared_ptr<Customer> customer) {
+                         std::shared_ptr<Customer> customer,
+                         PromotionManager* promotionManager = nullptr) {
     // 获取用户的购物车
     auto cart = cartManager->getCart(username, customer);
     
@@ -750,6 +1217,13 @@ void shoppingCartProcess(ShoppingCartManager* cartManager,
                     std::cout << "购物车为空！" << std::endl;
                     break;
                 }
+                
+                // 展示促销预览并确认订单
+                if (!confirmOrderWithPromotion(cart->getCartItems(), promotionManager)) {
+                    std::cout << "已取消结算。" << std::endl;
+                    break;
+                }
+                
                 std::cout << "请输入收货地址: ";
                 std::string address;
                 std::cin.ignore();
@@ -781,8 +1255,12 @@ void shoppingCartProcess(ShoppingCartManager* cartManager,
 /**
  * @brief 搜索商品流程（顾客功能）
  * @param itemSearcher 商品搜索器
+ * @param itemManager 商品管理器（可选）
+ * @param orderManager 订单管理器（可选）
+ * @param loginSystem 登录系统（可选）
+ * @param promotionManager 促销管理器（可选）
  */
-void searchItemProcess(ItemSearcher* itemSearcher, ItemManager* itemManager = nullptr, OrderManager* orderManager = nullptr, LoginSystem* loginSystem = nullptr) {
+void searchItemProcess(ItemSearcher* itemSearcher, ItemManager* itemManager = nullptr, OrderManager* orderManager = nullptr, LoginSystem* loginSystem = nullptr, PromotionManager* promotionManager = nullptr) {
     std::string keyword;
     
     std::cout << "\n===== 搜索商品 =====" << std::endl;
@@ -852,7 +1330,7 @@ void searchItemProcess(ItemSearcher* itemSearcher, ItemManager* itemManager = nu
     itemSearcher->displaySearchResults(results, true);  // 显示相似度
 
     if (itemManager && orderManager && loginSystem) {
-        processPurchaseInput(itemManager, orderManager, loginSystem);
+        processPurchaseInput(itemManager, orderManager, loginSystem, promotionManager);
     }
 }
 
@@ -890,6 +1368,10 @@ int main() {
     if (config->isAutoUpdateEnabled()) {
         orderManager.enableAutoUpdate(config->getPendingToShippedSeconds(), config->getShippedToDeliveredSeconds());
     }
+    
+    // 初始化促销管理器
+    PromotionManager promotionManager(config->getPromotionsFilePath());
+    promotionManager.loadFromFile();
     
     // 初始化登录系统
     LoginSystem loginSystem(&userManager, config);
@@ -929,11 +1411,11 @@ int main() {
                     
                 case 4:
                     // 搜索商品
-                    searchItemProcess(&itemSearcher, &itemManager, &orderManager, &loginSystem);
+                    searchItemProcess(&itemSearcher, &itemManager, &orderManager, &loginSystem, &promotionManager);
                     break;
                 case 5:
                     // 查看所有商品
-                    viewItems(&itemManager, &orderManager, &loginSystem);
+                    viewItems(&itemManager, &orderManager, &loginSystem, &promotionManager);
                     break;
                     
                 case 0:
@@ -961,12 +1443,12 @@ int main() {
             switch (choice) {
                 case 1:
                     // 查看商品信息
-                    viewItems(&itemManager, &orderManager, &loginSystem);
+                    viewItems(&itemManager, &orderManager, &loginSystem, &promotionManager);
                     break;
                     
                 case 2:
                     // 搜索商品
-                    searchItemProcess(&itemSearcher, &itemManager, &orderManager, &loginSystem);
+                    searchItemProcess(&itemSearcher, &itemManager, &orderManager, &loginSystem, &promotionManager);
                     break;
                     
                 case 3: {
@@ -975,7 +1457,7 @@ int main() {
                     if (user) {
                         std::string username = user->getUsername();
                         auto customer = std::dynamic_pointer_cast<Customer>(user);
-                        shoppingCartProcess(&cartManager, &itemManager, &orderManager, username, customer);
+                        shoppingCartProcess(&cartManager, &itemManager, &orderManager, username, customer, &promotionManager);
                     }
                     break;
                 }
@@ -1056,7 +1538,7 @@ int main() {
                     
                 case 2:
                     // 查看所有商品信息
-                    viewItems(&itemManager);
+                    viewItems(&itemManager, nullptr, nullptr, &promotionManager);
                     break;
                     
                 case 3:
@@ -1075,11 +1557,16 @@ int main() {
                     break;
 
                 case 6:
-                                                                                                               // 订单管理
+                    // 订单管理
                     manageOrdersProcess(&orderManager);
                     break;
                     
                 case 7:
+                    // 促销管理
+                    managePromotionsProcess(&promotionManager, &itemManager);
+                    break;
+                    
+                case 8:
                     // 登出
                     loginSystem.logout();
                     break;
