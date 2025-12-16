@@ -2,7 +2,9 @@
 
 ## 项目简介
 
-这是一个基于C++开发的功能完整的购物系统，提供了用户管理、登录认证、商品管理和智能搜索等功能。系统支持管理员和顾客两种角色，管理员可以管理商品和用户信息，顾客可以注册、登录、搜索和浏览商品。
+这是西安电子科技大学2024级软件工程专业《面向对象程序设计》课程的期末项目——模拟购物系统。
+
+这个系统是基于C++开发的功能完整的购物系统，提供了用户管理、登录认证、商品管理和智能搜索等功能。系统支持管理员和顾客两种角色，管理员可以管理商品和用户信息，顾客可以注册、登录、搜索和浏览商品。
 
 ## 功能特性
 
@@ -79,46 +81,50 @@
 ### 设计原则
 - **面向对象设计**：采用OOP思想，实现高内聚、低耦合
 - **模块化架构**：分为配置管理、用户管理、登录系统等独立模块
-- **单例模式**：配置管理器采用单例模式
 - **智能指针**：使用`std::shared_ptr`管理对象生命周期
+- **代码文件**：头文件和源文件分离，便于维护
+- **注释风格**：使用Doxygen风格注释
+- **构建工具**：使用CMake进行跨平台构建
 
 ### 项目结构
 ```
 shopping/
-├── CMakeLists.txt          # CMake构建配置
-├── config.yaml             # 系统配置文件
-├── DevDoc/                 # 开发文档目录
-├── README.md               # 项目说明文档
-├── ChangeLog.md            # 变更日志
-├── Include/                # 头文件目录
-│   ├── Config.h            # 配置管理类
+├── CMakeLists.txt                  # CMake构建配置
+├── DevDoc/                         # 开发文档目录
+├── README.md                       # 项目说明文档
+├── ChangeLog.md                    # 变更日志
+├── run.ps1                         # 运行脚本
+├── build.ps1                       # 构建脚本
+├── output_all_code.ps1             # 导出所有代码脚本
+├── Include/                        # 头文件目录
+│   ├── Config.h                    # 配置管理类
 │   ├── Login/
-│   │   └── LoginSystem.h   # 登录系统类
+│   │   └── LoginSystem.h           # 登录系统类
 │   ├── UserManage/
-│   │   ├── User.h          # 用户基类和子类
-│   │   └── UserManager.h   # 用户管理器
-│   ├── ItemManage/         # 商品管理模块
-│   │   ├── Item.h          # 商品类
-│   │   ├── ItemManager.h   # 商品管理器
-│   │   └── ItemSearcher.h  # 商品搜索器
-│   ├── ShoppingCart/       # 购物车模块
-│   │   ├── ShoppingCart.h  # 购物车类
-│   │   └── ShoppingCartManager.h # 购物车管理器
-│   ├── Order/              # 订单模块
-│   │   ├── Order.h         # 订单类
-│   │   ├── OrderManager.h  # 订单管理器
-│   │   └── OrderException.h # 订单异常类
-│   ├── Promotion/          # 促销管理模块
-│   │   ├── Promotion.h     # 促销活动类
-│   │   └── PromotionManager.h # 促销管理器
-│   └── Services/           # 服务模块
+│   │   ├── User.h                  # 用户基类和子类
+│   │   └── UserManager.h           # 用户管理器
+│   ├── ItemManage/                 # 商品管理模块
+│   │   ├── Item.h                  # 商品类
+│   │   ├── ItemManager.h           # 商品管理器
+│   │   └── ItemSearcher.h          # 商品搜索器
+│   ├── ShoppingCart/               # 购物车模块
+│   │   ├── ShoppingCart.h          # 购物车类
+│   │   └── ShoppingCartManager.h   # 购物车管理器
+│   ├── Order/                      # 订单模块
+│   │   ├── Order.h                 # 订单类
+│   │   ├── OrderManager.h          # 订单管理器
+│   │   └── OrderException.h        # 订单异常类
+│   ├── Promotion/                  # 促销管理模块
+│   │   ├── Promotion.h             # 促销活动类
+│   │   └── PromotionManager.h      # 促销管理器
+│   └── Services/                   # 服务模块
 │       └── CustomerReportService.h # 顾客购买数据统计服务
-├── Src/                    # 源文件目录
+├── Src/                            # 源文件目录
 │   ├── Config.cpp
 │   ├── Login/
 │   │   └── LoginSystem.cpp
 │   ├── Main/
-│   │   └── main.cpp        # 主程序入口
+│   │   └── main.cpp                # 主程序入口
 │   ├── UserManage/
 │   │   ├── User.cpp
 │   │   └── UserManager.cpp
@@ -132,20 +138,20 @@ shopping/
 │   ├── Order/
 │   │   ├── Order.cpp
 │   │   └── OrderManager.cpp
-│   ├── Promotion/          # 促销管理实现
+│   ├── Promotion/                  # 促销管理实现
 │   │   ├── Promotion.cpp
 │   │   └── PromotionManager.cpp
-│   └── Services/           # 服务模块实现（最新）
+│   └── Services/                   # 服务模块实现
 │       └── CustomerReportService.cpp # 顾客购买数据统计服务实现
-├── res/                    # 资源文件目录
-│   ├── config.yaml         # 系统配置文件
-│   └── data/               # 数据文件目录
-│       ├── users.csv       # 用户数据文件
-│       ├── items.csv       # 商品数据文件
-│       ├── shopping_cart.csv # 购物车数据文件
-│       ├── orders.csv      # 订单数据文件
-│       └── promotions.csv  # 促销数据文件
-└── bin/                    # 二进制文件夹
+├── res/                            # 资源文件目录
+│   ├── config.yaml                 # 系统配置文件
+│   └── data/                       # 数据文件目录
+│       ├── users.csv               # 用户数据文件
+│       ├── items.csv               # 商品数据文件
+│       ├── shopping_cart.csv       # 购物车数据文件
+│       ├── orders.csv              # 订单数据文件
+│       └── promotions.csv          # 促销数据文件
+└── bin/                            # 二进制文件夹
 ```
 
 ## 编译和运行
@@ -189,18 +195,9 @@ order_settings:
   shipped_to_delivered_seconds: 20
 ```
 
-### users.csv
-```csv
-username,password,phone
-```
-
-## 许可证
-
-本项目仅供学习和研究使用。
-
 ## 作者
 
-Shopping System Development Team
+[Hazuki Keatsu](https://github.com/hazuki-keatsu)
 
 ## 更新日志
 
