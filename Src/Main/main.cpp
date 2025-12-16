@@ -18,6 +18,7 @@
 #include "Order/OrderManager.h"
 #include "Promotion/Promotion.h"
 #include "Promotion/PromotionManager.h"
+#include "Services/CustomerReportService.h"
 #include <iostream>
 #include <string>
 #include <limits>
@@ -75,7 +76,8 @@ void showAdminMenu() {
     std::cout << "5. 删除商品" << std::endl;
     std::cout << "6. 订单管理" << std::endl;
     std::cout << "7. 促销管理" << std::endl;
-    std::cout << "8. 登出" << std::endl;
+    std::cout << "8. 用户数据分析" << std::endl;
+    std::cout << "9. 登出" << std::endl;
     std::cout << "======================" << std::endl;
     std::cout << "请选择: ";
 }
@@ -1335,6 +1337,33 @@ void searchItemProcess(ItemSearcher* itemSearcher, ItemManager* itemManager = nu
 }
 
 /**
+ * @brief 用户数据分析模块
+ */
+
+void userDataAnalysis(UserManager* userManager, OrderManager* orderManager, ItemManager* itemManager) {
+    std::cout << std::endl;
+    viewAllCustomers(userManager);
+    std::cout << "请输入要查询的用户ID：";
+    std::string idToSearch;
+    std::cin >> idToSearch;
+    if(idToSearch == "" || idToSearch.empty()) {
+        std::cout << "无效输入" << std::endl;
+        return;
+    }
+    std::cout << std::endl;
+
+    std::cout << "两种展示方式：1.生成数据文件(csv)；2.在终端展示。" << std::endl;
+    std::cout << "请选择：";
+    int choice;
+    std::cin >> choice;
+    if (choice == 1) {
+        CustomerReportService::GenerateReportFromCustomer(*(userManager->findCustomer(idToSearch)), *orderManager, itemManager);
+    } else if (choice == 2) {
+        CustomerReportService::DisplayReportToConsole(*(userManager->findCustomer(idToSearch)), *orderManager, itemManager);
+    }
+}
+
+/**
  * @brief 主函数
  */
 int main() {
@@ -1565,8 +1594,13 @@ int main() {
                     // 促销管理
                     managePromotionsProcess(&promotionManager, &itemManager);
                     break;
-                    
+
                 case 8:
+                    // 用户数据分析
+                    userDataAnalysis(&userManager, &orderManager, &itemManager);
+                    break;
+                    
+                case 9:
                     // 登出
                     loginSystem.logout();
                     break;
