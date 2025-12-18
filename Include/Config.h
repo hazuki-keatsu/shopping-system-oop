@@ -10,6 +10,7 @@
 
 #include <string>
 #include <map>
+#include "Interfaces/DependencyInterfaces.h"
 
 /**
  * @class Config
@@ -21,7 +22,7 @@
  * 2. 提供管理员账户信息
  * 3. 提供数据文件路径
  */
-class Config {
+class Config : public IConfigProvider {
 private:
     std::string adminUsername;      // 管理员用户名
     std::string adminPassword;      // 管理员密码
@@ -75,13 +76,13 @@ public:
      * @brief 获取管理员用户名
      * @return 管理员用户名
      */
-    std::string getAdminUsername() const { return adminUsername; }
+    std::string getAdminUsername() const override { return adminUsername; }
     
     /**
      * @brief 获取管理员密码
      * @return 管理员密码
      */
-    std::string getAdminPassword() const { return adminPassword; }
+    std::string getAdminPassword() const override { return adminPassword; }
     
     /**
      * @brief 获取用户数据文件路径

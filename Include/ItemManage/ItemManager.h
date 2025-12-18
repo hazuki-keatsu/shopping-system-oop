@@ -9,6 +9,7 @@
 #define ITEM_MANAGER_H
 
 #include "ItemManage/Item.h"
+#include "Interfaces/DependencyInterfaces.h"
 #include <vector>
 #include <map>
 #include <memory>
@@ -26,7 +27,7 @@ class PromotionManager;
  * 2. 使用map<类别, vector<商品指针>>建立类别索引
  * 3. 支持动态表头，可由管理员自定义字段
  */
-class ItemManager {
+class ItemManager : public IItemRepository {
 private:
     std::vector<std::shared_ptr<Item>> items;           // 所有商品列表
     std::map<std::string, std::vector<std::shared_ptr<Item>>> categoryIndex;  // 类别索引
@@ -71,47 +72,47 @@ public:
      * @brief 从CSV文件加载商品数据
      * @return 加载成功返回true，否则返回false
      */
-    bool loadFromFile();
+    bool loadFromFile() override;
     
     /**
      * @brief 保存商品数据到CSV文件
      * @return 保存成功返回true，否则返回false
      */
-    bool saveToFile();
+    bool saveToFile() override;
     
     /**
      * @brief 添加新商品
      * @param item 商品对象
      * @return 添加成功返回true，否则返回false
      */
-    bool addItem(std::shared_ptr<Item> item);
+    bool addItem(std::shared_ptr<Item> item) override;
     
     /**
      * @brief 根据ID删除商品
      * @param itemId 商品ID
      * @return 删除成功返回true，否则返回false
      */
-    bool deleteItem(const std::string& itemId);
+    bool deleteItem(const std::string& itemId) override;
     
     /**
      * @brief 根据ID查找商品
      * @param itemId 商品ID
      * @return 找到返回商品对象指针，否则返回nullptr
      */
-    std::shared_ptr<Item> findItemById(const std::string& itemId);
+    std::shared_ptr<Item> findItemById(const std::string& itemId) override;
     
     /**
      * @brief 根据类别获取商品列表
      * @param category 商品类别
      * @return 该类别下的所有商品
      */
-    std::vector<std::shared_ptr<Item>> getItemsByCategory(const std::string& category);
+    std::vector<std::shared_ptr<Item>> getItemsByCategory(const std::string& category) override;
     
     /**
      * @brief 获取所有商品列表
      * @return 所有商品
      */
-    const std::vector<std::shared_ptr<Item>>& getAllItems() const { return items; }
+    const std::vector<std::shared_ptr<Item>>& getAllItems() const override { return items; }
     
     /**
      * @brief 获取所有类别
@@ -136,12 +137,12 @@ public:
      * @param itemId 商品ID
      * @return 存在返回true，否则返回false
      */
-    bool isItemIdExists(const std::string& itemId) const;
+    bool isItemIdExists(const std::string& itemId) const override;
     
     /**
      * @brief 析构函数
      */
-    ~ItemManager();
+    ~ItemManager() override;
 };
 
 #endif // ITEM_MANAGER_H

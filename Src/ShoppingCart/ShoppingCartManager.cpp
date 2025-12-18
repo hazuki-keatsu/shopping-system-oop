@@ -15,7 +15,7 @@
  * @brief 构造函数实现
  */
 ShoppingCartManager::ShoppingCartManager(const std::string& filePath, 
-                                         std::shared_ptr<ItemManager> itemMgr)
+                                         std::shared_ptr<IItemRepository> itemMgr)
     : filePath(filePath), itemManager(itemMgr) {
 }
 

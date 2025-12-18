@@ -9,7 +9,7 @@
 #define ITEM_SEARCHER_H
 
 #include "ItemManage/Item.h"
-#include "ItemManage/ItemManager.h"
+#include "Interfaces/DependencyInterfaces.h"
 #include <vector>
 #include <memory>
 #include <string>
@@ -51,7 +51,7 @@ struct SearchResult {
  */
 class ItemSearcher {
 private:
-    ItemManager* itemManager;       // 商品管理器指针
+    IItemRepository* itemManager;   // 商品管理器指针
     
     /**
      * @brief 计算两个字符串的Levenshtein编辑距离
@@ -89,7 +89,7 @@ public:
      * @brief 构造函数
      * @param itemManager 商品管理器指针
      */
-    ItemSearcher(ItemManager* itemManager);
+    ItemSearcher(IItemRepository* itemManager);
     
     /**
      * @brief 根据商品名称精确搜索

@@ -2,6 +2,36 @@
 
 ```mermaid
 classDiagram
+    %% Dependency Injection Interfaces
+    class IConfigProvider {
+        <<interface>>
+        +getAdminUsername() string
+        +getAdminPassword() string
+    }
+
+    class IUserRepository {
+        <<interface>>
+        +loadFromFile() bool
+        +saveToFile() bool
+        +addCustomer(customer) bool
+        +findCustomer(username) shared_ptr~Customer~
+        +isUsernameExists(username) bool
+        +updatePassword(username, newPassword) bool
+        +getCustomers() vector~shared_ptr~Customer~~
+    }
+
+    class IItemRepository {
+        <<interface>>
+        +loadFromFile() bool
+        +saveToFile() bool
+        +addItem(item) bool
+        +deleteItem(itemId) bool
+        +findItemById(itemId) shared_ptr~Item~
+        +getItemsByCategory(category) vector~shared_ptr~Item~~
+        +getAllItems() vector~shared_ptr~Item~~
+        +isItemIdExists(itemId) bool
+    }
+
     %% Config Module
     class Config {
         -static Config* instance
@@ -42,6 +72,8 @@ classDiagram
         +deleteItem(itemId) bool
         +findItemByID(itemId) shared_ptr~Item~
         +getItemByCategory(category) vector~shared_ptr~Item~~
+        +getAllItems() vector~shared_ptr~Item~~
+        +isItemIdExists(itemId) bool
     }
 
     class SearchType {
@@ -59,7 +91,7 @@ classDiagram
     }
 
     class ItemSearcher {
-        -ItemManager* itemManager
+        -IItemRepository* itemManager
         +searchByNameExact(name) vector
         +searchByPriceRange(minPrice, maxPrice) vector
         +searchByCategory(category) vector
@@ -89,7 +121,9 @@ classDiagram
         +saveToFile() bool
         +addCustomer(customer) bool
         +findCustomer(username) shared_ptr~Customer~
+        +isUsernameExists(username) bool
         +updatePassword(username, newPwd) bool
+        +getCustomers() vector~shared_ptr~Customer~~
     }
 
     %% Login Module
@@ -101,8 +135,8 @@ classDiagram
     }
 
     class LoginSystem {
-        -UserManager* userManager
-        -Config* config
+        -IUserRepository* userManager
+        -IConfigProvider* config
         -UserRole currentUserRole
         -shared_ptr~User~ currentUser
         +login(username, password, isAdmin) bool
@@ -122,7 +156,7 @@ classDiagram
 
     class ShoppingCartManager {
         -map~string, shared_ptr~ShoppingCart~~ carts
-        -shared_ptr~ItemManager~ itemManager
+        -shared_ptr~IItemRepository~ itemManager
         -string filePath
         +loadFromFile() bool
         +saveToFile() bool
@@ -160,7 +194,7 @@ classDiagram
     class OrderManager {
         -vector~shared_ptr~Order~~ orders
         -string filePath
-        -shared_ptr~ItemManager~ itemManager
+        -shared_ptr~IItemRepository~ itemManager
         -thread autoUpdateThread
         -atomic~bool~ autoUpdateEnabled
         -mutex ordersMutex
@@ -235,8 +269,21 @@ classDiagram
     }
 
     %% Relationships
+    %% Interface Implementations
+    Config ..|> IConfigProvider : implements
+    UserManager ..|> IUserRepository : implements
+    ItemManager ..|> IItemRepository : implements
+
+    %% Dependencies on Interfaces
+    LoginSystem --> IUserRepository : uses
+    LoginSystem --> IConfigProvider : uses
+    ItemSearcher --> IItemRepository : uses
+    ShoppingCartManager --> IItemRepository : uses
+    OrderManager --> IItemRepository : uses
+    CustomerReportService --> IItemRepository : uses
+
+    %% Other Relationships
     ItemManager o-- Item : manages
-    ItemSearcher --> ItemManager : uses
     ItemSearcher ..> SearchType : uses
     ItemSearcher ..> SearchResult : produces
     
@@ -244,26 +291,21 @@ classDiagram
     Admin --|> User : inherits
     UserManager o-- Customer : manages
     
-    LoginSystem --> UserManager : uses
-    LoginSystem --> Config : uses
     LoginSystem ..> UserRole : uses
     
     ShoppingCart --> Customer : belongs to
     ShoppingCart --> Item : contains
     ShoppingCartManager o-- ShoppingCart : manages
-    ShoppingCartManager --> ItemManager : uses
     
     Order --> OrderItem : contains
     Order ..> OrderStatus : uses
     OrderManager o-- Order : manages
-    OrderManager --> ItemManager : uses
     
     Promotion ..> PromotionType : uses
     PromotionManager o-- Promotion : manages
     PromotionManager ..> PromotionResult : produces
     
     CustomerReportService --> OrderManager : uses
-    CustomerReportService --> ItemManager : uses
     CustomerReportService ..> CategoryStatistics : produces
     CustomerReportService ..> ItemStatistics : produces
 ```

@@ -17,7 +17,7 @@
 /**
  * @brief 构造函数实现
  */
-OrderManager::OrderManager(const std::string& filePath, std::shared_ptr<ItemManager> itemManager)
+OrderManager::OrderManager(const std::string& filePath, std::shared_ptr<IItemRepository> itemManager)
     : filePath(filePath), itemManager(itemManager), autoUpdateEnabled(false),
       pendingToShippedSeconds(10), shippedToDeliveredSeconds(20) {
 }

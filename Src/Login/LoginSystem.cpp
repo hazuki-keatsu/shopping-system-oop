@@ -11,7 +11,7 @@
 /**
  * @brief 构造函数实现
  */
-LoginSystem::LoginSystem(UserManager* userManager, Config* config)
+LoginSystem::LoginSystem(IUserRepository* userManager, IConfigProvider* config)
     : userManager(userManager), 
       config(config),
       currentUserRole(UserRole::NONE),

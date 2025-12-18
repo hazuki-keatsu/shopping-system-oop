@@ -15,7 +15,7 @@
 #include "UserManage/User.h"
 #include "Order/Order.h"
 #include "Order/OrderManager.h"
-#include "ItemManage/ItemManager.h"
+#include "Interfaces/DependencyInterfaces.h"
 
 /**
  * @struct CategoryStatistics
@@ -102,7 +102,7 @@ private:
      * @param itemStats 按商品统计的数据（输出参数）
      */
     static void analyzeOrders(const std::vector<std::shared_ptr<Order>>& orders,
-                             ItemManager* itemManager,
+                             IItemRepository* itemManager,
                              std::map<std::string, CategoryStatistics>& categoryStats,
                              std::map<std::string, ItemStatistics>& itemStats);
     
@@ -139,7 +139,7 @@ public:
      */
     static bool GenerateReportFromCustomer(Customer& customer, 
                                           OrderManager& orderManager,
-                                          ItemManager* itemManager,
+                                          IItemRepository* itemManager,
                                           const std::string& outputPath = "reports/");
     
     /**
@@ -153,7 +153,7 @@ public:
      */
     static void DisplayReportToConsole(Customer& customer, 
                                       OrderManager& orderManager,
-                                      ItemManager* itemManager);
+                                      IItemRepository* itemManager);
 };
 
 #endif // CUSTOMER_REPORT_SERVICE_H

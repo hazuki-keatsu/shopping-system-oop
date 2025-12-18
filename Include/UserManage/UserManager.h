@@ -9,6 +9,7 @@
 #define USER_MANAGER_H
 
 #include "UserManage/User.h"
+#include "Interfaces/DependencyInterfaces.h"
 #include <vector>
 #include <memory>
 
@@ -23,7 +24,7 @@
  * 4. 查找用户
  * 5. 更新用户信息
  */
-class UserManager {
+class UserManager : public IUserRepository {
 private:
     std::vector<std::shared_ptr<Customer>> customers;  // 顾客列表
     std::string filePath;                              // 数据文件路径
@@ -53,34 +54,34 @@ public:
      * @brief 从CSV文件加载用户数据
      * @return 加载成功返回true，否则返回false
      */
-    bool loadFromFile();
+    bool loadFromFile() override;
     
     /**
      * @brief 保存用户数据到CSV文件
      * @return 保存成功返回true，否则返回false
      */
-    bool saveToFile();
+    bool saveToFile() override;
     
     /**
      * @brief 添加新顾客
      * @param customer 顾客对象
      * @return 添加成功返回true，否则返回false
      */
-    bool addCustomer(std::shared_ptr<Customer> customer);
+    bool addCustomer(std::shared_ptr<Customer> customer) override;
     
     /**
      * @brief 根据用户名查找顾客
      * @param username 用户名
      * @return 找到返回顾客对象指针，否则返回nullptr
      */
-    std::shared_ptr<Customer> findCustomer(const std::string& username);
+    std::shared_ptr<Customer> findCustomer(const std::string& username) override;
     
     /**
      * @brief 检查用户名是否已存在
      * @param username 用户名
      * @return 存在返回true，否则返回false
      */
-    bool isUsernameExists(const std::string& username);
+    bool isUsernameExists(const std::string& username) override;
     
     /**
      * @brief 更新顾客密码
@@ -88,18 +89,18 @@ public:
      * @param newPassword 新密码
      * @return 更新成功返回true，否则返回false
      */
-    bool updatePassword(const std::string& username, const std::string& newPassword);
+    bool updatePassword(const std::string& username, const std::string& newPassword) override;
     
     /**
      * @brief 获取所有顾客列表
      * @return 顾客列表
      */
-    const std::vector<std::shared_ptr<Customer>>& getCustomers() const { return customers; }
+    const std::vector<std::shared_ptr<Customer>>& getCustomers() const override { return customers; }
     
     /**
      * @brief 析构函数
      */
-    ~UserManager();
+    ~UserManager() override;
 };
 
 #endif // USER_MANAGER_H

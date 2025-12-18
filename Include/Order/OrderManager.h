@@ -9,7 +9,7 @@
 #define ORDER_MANAGER_H
 
 #include "Order/Order.h"
-#include "ItemManage/ItemManager.h"
+#include "Interfaces/DependencyInterfaces.h"
 #include <vector>
 #include <memory>
 #include <string>
@@ -33,7 +33,7 @@ class OrderManager {
 private:
     std::vector<std::shared_ptr<Order>> orders;     // 所有订单列表
     std::string filePath;                           // 数据文件路径
-    std::shared_ptr<ItemManager> itemManager;       // 商品管理器
+    std::shared_ptr<IItemRepository> itemManager;   // 商品管理器（接口）
     
     // 自动状态更新相关
     std::atomic<bool> autoUpdateEnabled;            // 自动更新是否启用
@@ -81,7 +81,7 @@ public:
      * @param filePath 订单数据文件路径
      * @param itemManager 商品管理器指针
      */
-    OrderManager(const std::string& filePath, std::shared_ptr<ItemManager> itemManager);
+    OrderManager(const std::string& filePath, std::shared_ptr<IItemRepository> itemManager);
     
     /**
      * @brief 从CSV文件加载订单数据

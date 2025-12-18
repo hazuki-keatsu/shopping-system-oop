@@ -9,7 +9,7 @@
 #define LOGIN_SYSTEM_H
 
 #include "UserManage/User.h"
-#include "UserManage/UserManager.h"
+#include "Interfaces/DependencyInterfaces.h"
 #include "Config.h"
 #include <memory>
 #include <string>
@@ -36,8 +36,8 @@ enum class UserRole {
  */
 class LoginSystem {
 private:
-    UserManager* userManager;           // 用户管理器
-    Config* config;                     // 配置管理器
+    IUserRepository* userManager;       // 用户管理器
+    IConfigProvider* config;            // 配置管理器
     
     UserRole currentUserRole;           // 当前登录用户角色
     std::shared_ptr<User> currentUser;  // 当前登录用户对象
@@ -64,7 +64,7 @@ public:
      * @param userManager 用户管理器指针
      * @param config 配置管理器指针
      */
-    LoginSystem(UserManager* userManager, Config* config);
+    LoginSystem(IUserRepository* userManager, IConfigProvider* config);
     
     /**
      * @brief 用户登录

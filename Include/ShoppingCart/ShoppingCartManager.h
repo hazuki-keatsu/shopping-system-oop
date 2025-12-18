@@ -5,15 +5,15 @@
  * @date 2025-11-24
  */
 
-#ifndef SHOPPINGCARTMANAGER_H
-#define SHOPPINGCARTMANAGER_H
+#ifndef SHOPPING_CART_MANAGER_H
+#define SHOPPING_CART_MANAGER_H
 
 #include <map>
 #include <memory>
 #include <string>
 #include <vector>
 #include "ShoppingCart/ShoppingCart.h"
-#include "ItemManage/ItemManager.h"
+#include "Interfaces/DependencyInterfaces.h"
 
 /**
  * @class ShoppingCartManager
@@ -29,7 +29,7 @@ class ShoppingCartManager {
 private:
     std::string filePath;                                               // 购物车数据文件路径
     std::map<std::string, std::shared_ptr<ShoppingCart>> carts;         // 用户名到购物车的映射
-    std::shared_ptr<ItemManager> itemManager;                           // 商品管理器指针（用于查找商品）
+    std::shared_ptr<IItemRepository> itemManager;                       // 商品管理器指针（用于查找商品）
     
     /**
      * @brief 去除字符串首尾空格
@@ -58,7 +58,7 @@ public:
      * @param filePath 购物车数据文件路径
      * @param itemMgr 商品管理器指针
      */
-    ShoppingCartManager(const std::string& filePath, std::shared_ptr<ItemManager> itemMgr);
+    ShoppingCartManager(const std::string& filePath, std::shared_ptr<IItemRepository> itemMgr);
     
     /**
      * @brief 从CSV文件加载购物车数据
@@ -118,7 +118,7 @@ public:
      * @brief 设置商品管理器
      * @param itemMgr 商品管理器指针
      */
-    void setItemManager(std::shared_ptr<ItemManager> itemMgr) { itemManager = itemMgr; }
+    void setItemManager(std::shared_ptr<IItemRepository> itemMgr) { itemManager = itemMgr; }
     
     /**
      * @brief 析构函数
@@ -126,4 +126,4 @@ public:
     ~ShoppingCartManager();
 };
 
-#endif // SHOPPINGCARTMANAGER_H
+#endif // SHOPPING_CART_MANAGER_H

@@ -14,7 +14,7 @@
 /**
  * @brief 构造函数实现
  */
-ItemSearcher::ItemSearcher(ItemManager* itemManager)
+ItemSearcher::ItemSearcher(IItemRepository* itemManager)
     : itemManager(itemManager) {
 }
 

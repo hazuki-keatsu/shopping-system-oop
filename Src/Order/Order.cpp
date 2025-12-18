@@ -7,7 +7,7 @@
 
 #include "Order/Order.h"
 #include "Order/OrderException.h"
-#include "ItemManage/ItemManager.h"
+#include "Interfaces/DependencyInterfaces.h"
 #include <iostream>
 #include <sstream>
 #include <iomanip>
@@ -33,7 +33,7 @@ Order::Order()
 Order::Order(const std::string& userId, 
              const std::vector<std::pair<std::shared_ptr<Item>, int>>& cartItems,
              const std::string& shippingAddress,
-             ItemManager* itemManager)
+             IItemRepository* itemManager)
     : userId(userId), totalAmount(0.0), shippingAddress(shippingAddress), 
       status(OrderStatus::PENDING) {
     

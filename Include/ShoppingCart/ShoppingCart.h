@@ -5,8 +5,8 @@
  * @date 2025-11-24
  */
 
-#ifndef SHOPPINGCART_H
-#define SHOPPINGCART_H
+#ifndef SHOPPING_CART_H
+#define SHOPPING_CART_H
 
 #include <vector>
 #include <memory>
@@ -151,4 +151,4 @@ public:
     ~ShoppingCart();
 };
 
-#endif // SHOPPINGCART_H
+#endif // SHOPPING_CART_H

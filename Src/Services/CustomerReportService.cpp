@@ -36,7 +36,7 @@ std::vector<std::shared_ptr<Order>> CustomerReportService::getCustomerOrders(
  */
 void CustomerReportService::analyzeOrders(
     const std::vector<std::shared_ptr<Order>>& orders,
-    ItemManager* itemManager,
+    IItemRepository* itemManager,
     std::map<std::string, CategoryStatistics>& categoryStats,
     std::map<std::string, ItemStatistics>& itemStats) {
     
@@ -208,7 +208,7 @@ bool CustomerReportService::writeStatisticsToCSV(
 bool CustomerReportService::GenerateReportFromCustomer(
     Customer& customer, 
     OrderManager& orderManager,
-    ItemManager* itemManager,
+    IItemRepository* itemManager,
     const std::string& outputPath) {
     
     std::cout << "正在为用户 " << customer.getUsername() << " 生成购买数据统计报告..." << std::endl;
@@ -247,7 +247,7 @@ bool CustomerReportService::GenerateReportFromCustomer(
 void CustomerReportService::DisplayReportToConsole(
     Customer& customer, 
     OrderManager& orderManager,
-    ItemManager* itemManager) {
+    IItemRepository* itemManager) {
     
     std::cout << "\n========================================" << std::endl;
     std::cout << "顾客购买数据统计报告" << std::endl;

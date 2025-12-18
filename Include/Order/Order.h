@@ -13,6 +13,7 @@
 #include <memory>
 #include <ctime>
 #include "ItemManage/Item.h"
+#include "Interfaces/DependencyInterfaces.h"
 
 /**
  * @enum OrderStatus
@@ -80,7 +81,7 @@ public:
     Order(const std::string& userId, 
           const std::vector<std::pair<std::shared_ptr<Item>, int>>& items,
           const std::string& shippingAddress,
-          class ItemManager* itemManager);
+          class IItemRepository* itemManager);
     
     /**
      * @brief 从CSV数据构造订单（用于数据加载）

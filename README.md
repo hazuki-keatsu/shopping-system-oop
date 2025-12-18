@@ -97,6 +97,7 @@ shopping/
 ├── build.ps1                       # 构建脚本
 ├── output_all_code.ps1             # 导出所有代码脚本
 ├── Include/                        # 头文件目录
+│   ├── DependencyInterfaces.h      # 依赖接口
 │   ├── Config.h                    # 配置管理类
 │   ├── Login/
 │   │   └── LoginSystem.h           # 登录系统类
