@@ -199,7 +199,3 @@ order_settings:
 ## 作者
 
 [Hazuki Keatsu](https://github.com/hazuki-keatsu)
-
-## 更新日志
-
-详见 [ChangeLog.md](ChangeLog.md)
